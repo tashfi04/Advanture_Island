@@ -7,7 +7,7 @@ using namespace std;
 int main()
 {
     //sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height), "SFML Practice - 1");
-    sf::RenderWindow window(sf::VideoMode(1000, 960), "SFML Practice - 1");
+    sf::RenderWindow window(sf::VideoMode(1920, 960), "SFML Practice - 1");
     sf::Event event;
 
     //sf::Font font;
@@ -28,11 +28,11 @@ int main()
     //sprite2.setPosition(0, 462);
     sprite2.setPosition(0, 0);
 
-    window.setFramerateLimit(15);
+    window.setFramerateLimit(30);
     //window.setKeyRepeatEnabled(false); //if it's true then holding down jump key
                                          //cause the player to constantly keep jumping.
-    int velocity = 12, animatin_change_time = 75;
-    float jump_animation_time = velocity - 0;
+    int jump_velocity = 14, animatin_change_time = 75;
+    float jump_animation_time = jump_velocity - 3;
     bool iskeypressed;
     bool left = false, right = true, jump = false, inair = false;
 
@@ -40,6 +40,11 @@ int main()
 
     sf::Clock clock;
     int elapsed_time;
+
+    sf::View view(sf::Vector2f(0.0f, 0.0f), sf::Vector2f(1920.0f, 960.0f));
+
+    //sf::View view;
+    //view.setCenter(400.f, 200.f);
 
     while(window.isOpen())
     {
@@ -120,7 +125,7 @@ int main()
         if(jump)
         {
             iskeypressed = true;
-            if(velocity==0)
+            if(jump_velocity==0)
                 inair = false;
             if(sprite_size.top!=160)
             {
@@ -128,26 +133,26 @@ int main()
             }
             if(right)
             {
-                if(velocity>=jump_animation_time)
+                if(jump_velocity>=jump_animation_time)
                     sprite_size.left=80;
-                else if(velocity<jump_animation_time)
+                else if(jump_velocity<jump_animation_time)
                     sprite_size.left=160;
             }
             else if(left)
             {
-                if(velocity>=jump_animation_time)
+                if(jump_velocity>=jump_animation_time)
                     sprite_size.left=480;
-                else if(velocity<jump_animation_time)
+                else if(jump_velocity<jump_animation_time)
                     sprite_size.left=560;
             }
 
             sprite.setTextureRect((sprite_size));
 
-            sprite.move(0, -(velocity--));
-            if(sprite.getPosition().y+80==714 && !inair)
+            sprite.move(0, -(jump_velocity--));
+            if(sprite.getPosition().y+80==574 && !inair)
             {
                 jump = false;
-                velocity=12;
+                jump_velocity=14;
             }
         }
         //no movement animation
@@ -177,7 +182,11 @@ int main()
             }
             sprite.setTextureRect(sprite_size);
         }
+
+        view.setCenter(sprite.getPosition().x, 574);
+
         window.clear();
+        window.setView(view);
         window.draw(sprite2);
         window.draw(sprite);
         window.display();
