@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="12" height="7" tilewidth="80" tileheight="80" infinite="0" nextlayerid="5" nextobjectid="1">
+ <tileset firstgid="1" source="firen_0.tsx"/>
+ <tileset firstgid="71" source="firen_0_mirror.tsx"/>
+ <layer id="4" name="Tile Layer 1" width="12" height="7">
+  <data encoding="base64" compression="zlib">
+   eJzdx9sNgDAQA8HjnaaAbyAh1AUUzVpyFVgaWdtERIsOvV99oeJE8asHjJiQ/OqMAzs2v3rGgtWvfvHg9qv/sg9+uQe6
+  </data>
+ </layer>
+</map>
