@@ -220,6 +220,8 @@ int main()
                 }
                 sprite.setTextureRect(sprite_size);
             }
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                return 0;
 
             view.setCenter(sprite.getPosition().x, 574);
 
