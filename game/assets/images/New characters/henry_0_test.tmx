@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="12" height="5" tilewidth="80" tileheight="80" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="henry_0.tsx"/>
+ <tileset firstgid="71" source="henry_0_mirror.tsx"/>
+ <layer id="2" name="Tile Layer 1" width="12" height="5">
+  <data encoding="csv">
+1,2,3,4,3,2,80,79,78,77,78,79,
+5,6,7,8,7,6,76,75,74,73,74,75,
+61,62,63,62,61,140,139,138,139,140,0,0,
+11,12,13,14,15,16,90,89,88,87,86,85,
+31,32,33,34,35,36,110,109,108,107,106,105
+</data>
+ </layer>
+</map>

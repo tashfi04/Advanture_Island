@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="2" height="1" tilewidth="48" tileheight="48" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="henry_arrow_.tsx"/>
+ <tileset firstgid="2" source="henry_arrow1_mirror_.tsx"/>
+ <tileset firstgid="3" source="henry_arrow11.tsx"/>
+ <tileset firstgid="4" source="henry_arrow11_mirror.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="2" height="1">
+  <data encoding="base64" compression="zlib">
+   eJxjZmBgYAFiAAAwAAg=
+  </data>
+ </layer>
+</map>
