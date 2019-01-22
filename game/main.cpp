@@ -40,9 +40,12 @@ int main()
 
     sf::IntRect sprite_size(0, 0, 80, 80);
     sf::IntRect sprite_arrow_size(0, 0, 48, 48);
-    sf::Sprite sprite(texture, sprite_size), sprite2(texture2), sprite_menu(texture_menu), sprite_menu_arrow(texture_menu_arrow), sprite_arrow(texture_arrow, sprite_arrow_size);
-    sf::IntRect sprite_enemy_size[3];
+    sf::Sprite sprite(texture, sprite_size), sprite2(texture2), sprite_menu(texture_menu), sprite_menu_arrow(texture_menu_arrow);//, sprite_arrow(texture_arrow, sprite_arrow_size);
+    sf::Sprite sprite_arrow(texture_arrow, sprite_arrow_size);
+    vector <sf::Sprite> sprite_arrows;
+    vector <int> arrow_direction;
 
+    sf::IntRect sprite_enemy_size[3];
     sf::Sprite sprite_enemy[3];
     for(int i=0; i<3; i++)
     {
@@ -51,6 +54,7 @@ int main()
         sprite_enemy_size[i].width = 80;
         sprite_enemy_size[i].height = 80;
         sprite_enemy[i].setTexture(texture_enemy);
+        sprite_enemy[i].setTextureRect(sprite_enemy_size[i]);
     }
 //    sprite.setPosition(445, 360-80);
     //sprite.setPosition(445, 574-80);
@@ -62,7 +66,7 @@ int main()
     window.setFramerateLimit(30);
     window.setKeyRepeatEnabled(false); //if it's true then holding down jump key
     //cause the player to constantly keep jumping.
-    int jump_velocity = 14, animatin_change_time = 75, now, lives, arrow_direction = 0;//14
+    int jump_velocity = 14, animatin_change_time = 75, now, lives, enemy_direction[3], enemy_platform[3]={2, 6, 6};//14
     float jump_animation_time = jump_velocity - 3;
     bool iskeypressed;
     bool left = false, right = true, jump = false, inair = false, fall = false, collision_up, collision_down, collision_left, collision_right;
@@ -70,7 +74,7 @@ int main()
 
 
     //current maximum distance covered while jumping is 125 pixels
-    sf::Clock clock ,attack_clock;
+    sf::Clock clock ,enemy_clock;
     int elapsed_time;
 
     sf::View view(sf::Vector2f(0.0f, 0.0f), sf::Vector2f(1300.0f, 620.0f));//sf::Vector2f(1920.0f, 960.0f));
@@ -191,7 +195,11 @@ int main()
             {
                 lives = 3;
                 sprite.setPosition(445, 360-80);
-                sprite_arrow.setPosition(0, 700);
+                sprite_enemy[0].setPosition(platform[2].left+30, 360-80);
+                sprite_enemy[1].setPosition(platform[6].left+30, 360-80);
+                sprite_enemy[2].setPosition(platform[6].left+800, 360-80);
+                enemy_direction[0]=enemy_direction[1]=enemy_direction[2]=5;
+                //sprite_arrow.setPosition(0, 700);
                 window.clear();
 
                 while(lives != 0)
@@ -207,13 +215,15 @@ int main()
                                 attack = true;
                                 if(right)
                                 {
+                                    sprite_arrow_size.left = 0;
                                     sprite_size.left = 0;
-                                    arrow_direction = 1;
+                                    arrow_direction.push_back(20);
                                 }
                                 else if(left)
                                 {
+                                    sprite_arrow_size.left = 48;
                                     sprite_size.left = 480;
-                                    arrow_direction = -1;
+                                    arrow_direction.push_back(-20);
                                 }
                                 //cout<<"attack!!!"<<endl;
                             }
@@ -248,7 +258,20 @@ int main()
                     collision_up = collision_down = collision_left = collision_right = false;
                     now = -1;
                     player=sprite.getGlobalBounds();
-                    arrow=sprite_arrow.getGlobalBounds();
+                    for(int i=0; i<sprite_arrows.size(); i++)
+                    {
+                        sprite_arrows[i].move(arrow_direction[i], .7);
+                        arrow=sprite_arrows[i].getGlobalBounds();
+
+                        for(int j=0; j<7; j++)
+                        {
+                            if(arrow.intersects(platform[j]))
+                            {
+                                sprite_arrows.erase(sprite_arrows.begin()+i);
+                                arrow_direction.erase(arrow_direction.begin()+i);
+                            }
+                        }
+                    }
                     for(int i=0; i<7; i++)
                     {
                         if(player.left<platform[i].left+platform[i].width && player.left+80>platform[i].left)
@@ -275,7 +298,7 @@ int main()
                             else if(platform_1.left+platform_1.width-player.left == 5)
                                 collision_left = true;*/
                         }
-                        if(arrow.intersects(platform[i]))
+                        /*if(arrow.intersects(platform[i]))
                         {
                             sprite_arrow.setPosition(0, 700);
                             arrow_direction = 0;
@@ -293,13 +316,47 @@ int main()
                                 //cout<<"L"<<endl;
                             }
                             //cout<<"*((*("<<endl;
-                        }
+                        }*/
                     }
 
                     if(collision_down  && fall)
                     {
                         fall = false;
                         jump_velocity = 14;
+                    }
+
+                    //Enemy movement
+                    for(int i=0; i<3; i++)
+                    {
+                        if(player.intersects(sprite_enemy[i].getGlobalBounds()))
+                            sprite_enemy_size[i].top=80;
+                        else
+                            sprite_enemy_size[i].top=0;
+                        if(sprite_enemy[i].getPosition().x==platform[enemy_platform[i]].left)
+                        {
+                            sprite_enemy_size[i].left=0;
+                            enemy_direction[i]=5;
+                        }
+                        else if(sprite_enemy[i].getPosition().x+80==platform[enemy_platform[i]].left+platform[enemy_platform[i]].width)
+                        {
+                            sprite_enemy_size[i].left=480;
+                            enemy_direction[i]=-5;
+                        }
+                        if(enemy_clock.getElapsedTime().asMilliseconds()>animatin_change_time)
+                        {
+                            if(enemy_direction[i]==5 && sprite_enemy_size[i].left>=400)
+                            {
+                                sprite_enemy_size[i].left=0;
+                                cout<<sprite_enemy_size[i].left<<endl;
+                            }
+                            else if(enemy_direction[i]==-5 && sprite_enemy_size[i].left>=880 || sprite_enemy_size[i].left<480)
+                                sprite_enemy_size[i].left=480, cout<<sprite_enemy_size[i].left<<endl;
+                            else
+                                sprite_enemy_size[i].left+=80;
+                            enemy_clock.restart();
+                        }
+                        sprite_enemy[i].setTextureRect(sprite_enemy_size[i]);
+                        sprite_enemy[i].move(enemy_direction[i], 0);
                     }
 
                     //cout<<sprite.getPosition().y+80<<"---"<<collision_down<<"---"<<player.top<<"---"<<platform_1.top<<endl;
@@ -342,7 +399,7 @@ int main()
                             {
                                 if(sprite_size.top!=80)
                                     sprite_size.top=80;
-                                if(sprite_size.left>=880 || sprite_size.left<100)
+                                if(sprite_size.left>=880 || sprite_size.left<480)//100)
                                     sprite_size.left=480;
                                 else
                                     sprite_size.left+=80;
@@ -449,7 +506,7 @@ int main()
                             sprite_size.top=240;
                         if(right)
                         {
-                            sprite_arrow_size.left = 0;
+                            //sprite_arrow_size.left = 0;
                             if(clock.getElapsedTime().asMilliseconds()>animatin_change_time)
                             {
                                 if(sprite_size.left>=400)
@@ -457,7 +514,9 @@ int main()
                                     sprite_size.left = 0;
                                     attack = false;
                                     //cout<<player.top+80<<"<><>"<<player.top/2<<endl;
+                                    //sprite_arrow.setPosition(player.left+80, player.top+20);
                                     sprite_arrow.setPosition(player.left+80, player.top+20);
+                                    sprite_arrows.push_back(sprite_arrow);
                                     //cout<<sprite_arrow.getGlobalBounds().top<<endl;
                                 }
                                 else
@@ -468,7 +527,7 @@ int main()
                         }
                         else if(left)
                         {
-                            sprite_arrow_size.left = 48;
+                            //sprite_arrow_size.left = 48;
                             if(clock.getElapsedTime().asMilliseconds()>animatin_change_time)
                             {
                                 if(sprite_size.left>=880 || sprite_size.left<480)
@@ -476,6 +535,7 @@ int main()
                                     sprite_size.left=480;
                                     attack = false;
                                     sprite_arrow.setPosition(player.left, player.top+20);
+                                    sprite_arrows.push_back(sprite_arrow);
                                 }
                                 else
                                     sprite_size.left+=80;
@@ -486,6 +546,8 @@ int main()
                         sprite_arrow.setTextureRect(sprite_arrow_size);
                         sprite.setTextureRect(sprite_size);
                     }
+
+
                     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
                         return 0;
 
@@ -504,7 +566,10 @@ int main()
                     window.setView(view);
                     window.draw(sprite2);
                     window.draw(sprite);
-                    window.draw(sprite_arrow);
+                    for(int i=0; i<sprite_arrows.size(); i++)
+                        window.draw(sprite_arrows[i]);
+                    for(int i=0; i<3; i++)
+                        window.draw(sprite_enemy[i]);
                     window.display();
                 }
                 window.clear();
