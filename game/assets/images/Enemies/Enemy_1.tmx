@@ -4,7 +4,7 @@
  <tileset firstgid="71" source="bandit_0_mirror.tsx"/>
  <layer id="1" name="Tile Layer 1" width="12" height="3">
   <data encoding="base64" compression="zlib">
-   eJxjZWBgYANidiDmgNIgvg8QewOxFxB7QmkQnxuIeYCYF4j5gDgKiCOBOAKIwxkoBwBNAwN7
+   eJwtx0sKglAAQNE3MQXLLaQm2Fb8zLPmCpa6/2HngYPD5SYhhAsp2dn4IwM93dn4OVduFLQ8+fBm4sXCzJ2SipqGBwc7Gz9WvvwBxfMH4w==
   </data>
  </layer>
 </map>

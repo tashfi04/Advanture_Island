@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -7,7 +8,7 @@ using namespace std;
 int main()
 {
     //sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height), "SFML Practice - 1");
-    sf::RenderWindow window(sf::VideoMode(1300, 620), "Adventure Island");//(1920, 960), "SFML Practice - 1");
+    sf::RenderWindow window(sf::VideoMode(1300, 600), "Adventure Island");//(1920, 960), "SFML Practice - 1");
     sf::Event event_menu, event_ingame;
 
     //sf::Font font;
@@ -19,7 +20,8 @@ int main()
     sf::Font font1, font2;
     font1.loadFromFile("assets/fonts/LobsterTwo-Bold.ttf");
     font2.loadFromFile("assets/fonts/Orbitron-Regular.ttf");
-    sf::Text text1("ADVENTURE ISLAND", font1, 72);
+    sf::Text controls("Use the arrow keys to move, spacebar to jump and Z to fire arrows.", font2, 36);
+    sf::Text text1("ADVENTURE ISLAND", font1, 72), text_end("GAME OVER", font2, 36), text_end2("Press space to continue", font2, 18);
     sf::Text text2("New Game", font2, 18), text3("Controls", font2, 18), text4("High Score", font2, 18), text5("Credits", font2, 18), text6("Exit", font2, 18);
     text1.setPosition(window.getSize().x/3, window.getSize().y/3);
     text2.setPosition(text1.getPosition().x, text1.getPosition().y+100);
@@ -27,12 +29,15 @@ int main()
     text4.setPosition(text3.getPosition().x, text3.getPosition().y+50);
     text5.setPosition(text4.getPosition().x, text4.getPosition().y+50);
     text6.setPosition(text5.getPosition().x, text5.getPosition().y+50);
+    text_end.setPosition(600, 310);
+    text_end2.setPosition(550, 360);
+    controls.setPosition(300, 500);
 
     sf::Texture texture, texture2, texture_menu, texture_menu_arrow, texture_arrow, texture_enemy;
     //texture.loadFromFile("assets/images/firen_0_test.png");//, sf::FloatRect(0 ,0, 80, 80));
     texture.loadFromFile("assets/images/henry_0_test.png");
     texture_arrow.loadFromFile("assets/images/henry_arrow_test_2.png");
-    texture_enemy.loadFromFile("assets/images/Enemy_1.png");
+    texture_enemy.loadFromFile("assets/images/Enemy_2.png");
     texture2.loadFromFile("assets/images/map_1_tes_fixed_2t.png");
     //texture2.loadFromFile("assets/images/map_1_test.png");
     texture_menu.loadFromFile("assets/images/Main_menu.jpg");
@@ -45,6 +50,7 @@ int main()
     vector <sf::Sprite> sprite_arrows;
     vector <int> arrow_direction;
 
+    sf::FloatRect enemy_intersect;
     sf::IntRect sprite_enemy_size[3];
     sf::Sprite sprite_enemy[3];
     for(int i=0; i<3; i++)
@@ -63,21 +69,30 @@ int main()
     sf::Vector2f sprite_menu_arrow_pos(text2.getPosition().x-28, text2.getPosition().y+2);
     //sprite_arrow.setPosition(sprite_arrow_pos.x, sprite_arrow_pos.y);
 
+    sf::SoundBuffer select, start, denied;
+    select.loadFromFile("assets/sounds/Select.wav");
+    start.loadFromFile("assets/sounds/Start1.wav");
+    denied.loadFromFile("assets/sounds/Denied1.wav");
+
+    sf::Sound sound1(select), sound2(start), sound3(denied);
+    sf::Music music;
+    music.openFromFile("assets/sounds/Mushroom Theme - Copy.ogg");
+
     window.setFramerateLimit(30);
     window.setKeyRepeatEnabled(false); //if it's true then holding down jump key
     //cause the player to constantly keep jumping.
-    int jump_velocity = 14, animatin_change_time = 75, now, lives, enemy_direction[3], enemy_platform[3]={2, 6, 6};//14
+    int jump_velocity = 14, animatin_change_time = 75, now, lives, enemy_direction[3], enemy_platform[3]={2, 6, 6}, player_death_time=100;//14
     float jump_animation_time = jump_velocity - 3;
     bool iskeypressed;
     bool left = false, right = true, jump = false, inair = false, fall = false, collision_up, collision_down, collision_left, collision_right;
-    bool attack = false;
+    bool attack = false, enemy_attack[3], enemy_dead[3], player_dead_animation, exit;
 
 
     //current maximum distance covered while jumping is 125 pixels
-    sf::Clock clock ,enemy_clock;
+    sf::Clock clock ,enemy_clock, death_clock;
     int elapsed_time;
 
-    sf::View view(sf::Vector2f(0.0f, 0.0f), sf::Vector2f(1300.0f, 620.0f));//sf::Vector2f(1920.0f, 960.0f));
+    sf::View view(sf::Vector2f(0.0f, 0.0f), sf::Vector2f(1300.0f, 600.0f));//sf::Vector2f(1920.0f, 960.0f));
 
     //sf::View view;
     //view.setCenter(400.f, 200.f);
@@ -193,24 +208,28 @@ int main()
                 window.close();
             if(sprite_menu_arrow_pos.y == text2.getPosition().y+2)
             {
+                sound2.play();
                 lives = 3;
                 sprite.setPosition(445, 360-80);
                 sprite_enemy[0].setPosition(platform[2].left+30, 360-80);
                 sprite_enemy[1].setPosition(platform[6].left+30, 360-80);
                 sprite_enemy[2].setPosition(platform[6].left+800, 360-80);
                 enemy_direction[0]=enemy_direction[1]=enemy_direction[2]=5;
+                player_dead_animation=enemy_dead[0]=enemy_dead[1]=enemy_dead[2]=false;
+                exit=false;
                 //sprite_arrow.setPosition(0, 700);
-                window.clear();
+                //window.clear();
 
                 while(lives != 0)
                 {
+                    music.play();
                     while(window.pollEvent(event_ingame))
                     {
                         if(event_ingame.type==sf::Event::Closed)
                             window.close();
                         if(event_ingame.type==sf::Event::KeyPressed)
                         {
-                            if(event_ingame.key.code==sf::Keyboard::Z && !jump && !fall &&!attack)
+                            if(event_ingame.key.code==sf::Keyboard::Z && !jump && !fall &&!attack && !player_dead_animation)
                             {
                                 attack = true;
                                 if(right)
@@ -229,20 +248,20 @@ int main()
                             }
                             //to make the character turn instantly without waiting for the
                             //usual delay(animation_change_time) between animation change
-                            if(event_ingame.key.code==sf::Keyboard::Right && !right && !collision_right && !attack)
+                            if(event_ingame.key.code==sf::Keyboard::Right && !right && !collision_right && !attack && !player_dead_animation)
                             {
                                 sprite_size.top=80;
                                 sprite_size.left=0;
                                 sprite.setTextureRect(sprite_size);
                             }
-                            else if(event_ingame.key.code==sf::Keyboard::Left && !left && !collision_left && !attack)
+                            else if(event_ingame.key.code==sf::Keyboard::Left && !left && !collision_left && !attack && !player_dead_animation)
                             {
                                 sprite_size.top=80;
                                 sprite_size.left=480;
                                 sprite.setTextureRect(sprite_size);
                             }
                             //iskeypressed = true;
-                            if(event_ingame.key.code==sf::Keyboard::Space && !jump && !fall && !attack)
+                            if(event_ingame.key.code==sf::Keyboard::Space && !jump && !fall && !attack && !player_dead_animation)
                             {
                                 jump = true;
                                 inair = true;
@@ -262,6 +281,18 @@ int main()
                     {
                         sprite_arrows[i].move(arrow_direction[i], .7);
                         arrow=sprite_arrows[i].getGlobalBounds();
+
+                        for(int j=0; j<3; j++)
+                        {
+                            //cout<<arrow.intersects(sprite_enemy[j].getGlobalBounds(), enemy_intersect)<<"><"<<enemy_intersect.width<<endl;
+                            if(arrow.intersects(sprite_enemy[j].getGlobalBounds(), enemy_intersect) && enemy_intersect.width>=30)
+                            {
+                                enemy_dead[j] = true;
+                                sprite_arrows.erase(sprite_arrows.begin()+i);
+                                arrow_direction.erase(arrow_direction.begin()+i);
+                                sound3.play();
+                            }
+                        }
 
                         for(int j=0; j<7; j++)
                         {
@@ -319,44 +350,114 @@ int main()
                         }*/
                     }
 
-                    if(collision_down  && fall)
+                    if(collision_down && fall)
                     {
                         fall = false;
                         jump_velocity = 14;
                     }
 
                     //Enemy movement
+
                     for(int i=0; i<3; i++)
                     {
-                        if(player.intersects(sprite_enemy[i].getGlobalBounds()))
-                            sprite_enemy_size[i].top=80;
-                        else
-                            sprite_enemy_size[i].top=0;
-                        if(sprite_enemy[i].getPosition().x==platform[enemy_platform[i]].left)
+                        //cout<<sprite_enemy_size[0].left<<"><"<<sprite_enemy[0].getPosition().x<<endl;
+                        if(!enemy_dead[i] && !player_dead_animation)
                         {
-                            sprite_enemy_size[i].left=0;
-                            enemy_direction[i]=5;
-                        }
-                        else if(sprite_enemy[i].getPosition().x+80==platform[enemy_platform[i]].left+platform[enemy_platform[i]].width)
-                        {
-                            sprite_enemy_size[i].left=480;
-                            enemy_direction[i]=-5;
-                        }
-                        if(enemy_clock.getElapsedTime().asMilliseconds()>animatin_change_time)
-                        {
-                            if(enemy_direction[i]==5 && sprite_enemy_size[i].left>=400)
+                            enemy_attack[i] = false;
+                            if(player.intersects(sprite_enemy[i].getGlobalBounds()) && (enemy_direction[i]==5 && player.left-sprite_enemy[i].getGlobalBounds().left-80==-30) || (enemy_direction[i]==-5 && player.left+80-sprite_enemy[i].getGlobalBounds().left==30))
                             {
-                                sprite_enemy_size[i].left=0;
-                                cout<<sprite_enemy_size[i].left<<endl;
+                                sprite_enemy_size[i].top=80;
+                                enemy_attack[i] = true;
+                                player_dead_animation = true;
+                                death_clock.restart();
                             }
-                            else if(enemy_direction[i]==-5 && sprite_enemy_size[i].left>=880 || sprite_enemy_size[i].left<480)
-                                sprite_enemy_size[i].left=480, cout<<sprite_enemy_size[i].left<<endl;
                             else
-                                sprite_enemy_size[i].left+=80;
-                            enemy_clock.restart();
+                                sprite_enemy_size[i].top=0;
+                            if(!enemy_attack[i])
+                            {
+                                if(sprite_enemy[i].getPosition().x==platform[enemy_platform[i]].left)
+                                {
+                                    sprite_enemy_size[i].left=0;
+                                    enemy_direction[i]=5;
+                                }
+                                else if(sprite_enemy[i].getPosition().x+80==platform[enemy_platform[i]].left+platform[enemy_platform[i]].width)
+                                {
+                                    sprite_enemy_size[i].left=480;
+                                    enemy_direction[i]=-5;
+                                }
+                            }
+                            if(enemy_clock.getElapsedTime().asMilliseconds()>animatin_change_time)
+                            {
+                                if(!enemy_attack[i])
+                                {
+                                    if(enemy_direction[i]==5)
+                                    {
+                                        if(sprite_enemy_size[i].left>=400)
+                                            sprite_enemy_size[i].left=0;
+                                        else
+                                            sprite_enemy_size[i].left+=80;
+                                        //cout<<enemy_direction[i]<<" R "<<sprite_enemy_size[i].left<<endl;
+                                    }
+                                    else if(enemy_direction[i]==-5)
+                                    {
+                                        if(sprite_enemy_size[i].left>=880 || sprite_enemy_size[i].left<480)
+                                            sprite_enemy_size[i].left=480;
+                                        else
+                                            sprite_enemy_size[i].left+=80;
+                                        //cout<<enemy_direction[i]<<" L "<<sprite_enemy_size[i].left<<endl;
+                                    }
+                                }
+                                else
+                                {
+                                    if(enemy_direction[i]==5)
+                                    {
+                                        if(sprite_enemy_size[i].left>=400)
+                                            sprite_enemy_size[i].left=0;
+                                        else
+                                            sprite_enemy_size[i].left+=80;
+                                    }
+                                    else if(enemy_direction[i]==-5)
+                                    {
+                                        if(sprite_enemy_size[i].left>=880 || sprite_enemy_size[i].left<480)
+                                            sprite_enemy_size[i].left=480;
+                                        else
+                                            sprite_enemy_size[i].left+=80;
+                                    }
+                                }
+                                enemy_clock.restart();
+                            }
+                            sprite_enemy[i].setTextureRect(sprite_enemy_size[i]);
+                            if(!enemy_attack[i])
+                                sprite_enemy[i].move(enemy_direction[i], 0);
                         }
-                        sprite_enemy[i].setTextureRect(sprite_enemy_size[i]);
-                        sprite_enemy[i].move(enemy_direction[i], 0);
+                        else if(enemy_dead[i])
+                        {
+                            if(sprite_enemy_size[i].top!=160)
+                                sprite_enemy_size[i].top=160;
+                            sprite_enemy_size[i].left=400;
+                            //sprite_enemy[i].setPosition(sprite_enemy[i].getPosition().x, sprite_enemy[i].getPosition().y+5);
+                            /*if(enemy_clock.getElapsedTime().asMilliseconds()>animatin_change_time)
+                            {
+                                if(enemy_direction[i]==5)
+                                {
+                                    if(sprite_enemy_size[i].left>=400)
+                                        sprite_enemy_size[i].left=400;
+                                    else
+                                        sprite_enemy_size[i].left+=80;
+                                    cout<<" R "<<sprite_enemy_size[i].left<<endl;
+                                }
+                                else if(enemy_direction[i]==-5)
+                                {
+                                    if(sprite_enemy_size[i].left>=880 || sprite_enemy_size[i].left<480)
+                                        sprite_enemy_size[i].left=880;
+                                    else
+                                        sprite_enemy_size[i].left+=80;
+                                    cout<<" L "<<sprite_enemy_size[i].left<<endl;
+                                }
+                            }*/
+                            //enemy_clock.restart();
+                            sprite_enemy[i].setTextureRect(sprite_enemy_size[i]);
+                        }
                     }
 
                     //cout<<sprite.getPosition().y+80<<"---"<<collision_down<<"---"<<player.top<<"---"<<platform_1.top<<endl;
@@ -366,7 +467,7 @@ int main()
 
 
                     //forward movement and animation
-                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !collision_right && !attack)
+                    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !collision_right && !attack && !player_dead_animation)
                     {
                         iskeypressed = true;
                         right = true;
@@ -388,7 +489,7 @@ int main()
                         sprite.move(5, 0);
                     }
                     //backward movement and animation
-                    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !collision_left && !attack)
+                    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !collision_left && !attack && !player_dead_animation)
                     {
                         iskeypressed = true;
                         left = true;
@@ -468,7 +569,7 @@ int main()
                     }
 
                     //no movement animation
-                    if(!iskeypressed && !attack)
+                    if(!iskeypressed && !attack && !player_dead_animation)
                     {
                         if(sprite_size.top!=0)
                             sprite_size.top=0;
@@ -499,7 +600,7 @@ int main()
                     }
 
                     //attack animation
-                    if(attack)
+                    if(attack && !player_dead_animation)
                     {
                         iskeypressed = true;
                         if(sprite_size.top!=240)
@@ -547,6 +648,16 @@ int main()
                         sprite.setTextureRect(sprite_size);
                     }
 
+                    if(player_dead_animation)
+                    {
+                        sprite_size.top=320;
+                        sprite_size.left=320;
+                        sprite.setTextureRect(sprite_size);
+                        if(death_clock.getElapsedTime().asSeconds()>3);
+                            sprite.setPosition(0, 700);
+                        player_dead_animation=false;
+                    }
+
 
                     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
                         return 0;
@@ -560,7 +671,12 @@ int main()
                     //if(sf::Keyboard::isKeyPressed(sf::Keyboard::H))
                     //   cout<<sprite.getPosition().x+80<<endl;
 
-                    view.setCenter(sprite.getPosition().x, 360);
+                    if(sprite.getPosition().x<=650)
+                        view.setCenter(650, 300);
+                    else if(sprite.getPosition().x>=4320-650)
+                        view.setCenter(4320-650, 300);
+                    else
+                        view.setCenter(sprite.getPosition().x, 300);
 
                     window.clear();
                     window.setView(view);
@@ -571,8 +687,28 @@ int main()
                     for(int i=0; i<3; i++)
                         window.draw(sprite_enemy[i]);
                     window.display();
+                    music.stop();
                 }
                 window.clear();
+            }
+            if(sprite_menu_arrow_pos.y == text3.getPosition().y+2)
+            {
+                while(!exit)
+                {
+                    while(window.pollEvent(event_ingame))
+                    {
+                        if(event_ingame.type==sf::Event::Closed)
+                            window.close();
+                        if(event_ingame.type==sf::Event::KeyPressed)
+                        {
+                            if(event_ingame.key.code==sf::Keyboard::Space)
+                                exit=true;
+                        }
+                    }
+                    window.clear();
+                    window.draw(controls);
+                }
+
             }
         }
     }

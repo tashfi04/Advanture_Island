@@ -1,0 +1,8 @@
+Q: What is this sample pack?
+A: Hey there, thank you for getting this sound effects pack! This is for title screens in a game, and should cover the basic functionality of moving the selector, going forwards and backwards, or unsuccessfully trying to select mysterious options that aren't available. Hopefully I've made the sound effects somewhat self-explanatory. They should not clip and be at a reasonably loud enough volume, so they should suit your purposes just fine.
+
+Q: Who is this intended for?
+A: Retro game designers who are going for a gameboy or NES aesthetic.
+
+Q: How do I credit you/use this in my game? 
+A: This work is licensed under a Creative Commons Attribution 4.0 International License. In non-legalese: in the credits section of your game and where necessary, tell them that the title screen sounds were made by HOFFY. If you want to be extra nice and help a starvin' musician out, please consider linking them to my primary website, http://hoffy.rocks !
